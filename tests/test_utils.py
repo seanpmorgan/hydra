@@ -3,10 +3,10 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import pytest
-from omegaconf import DictConfig, OmegaConf
 
 from hydra import utils
 from hydra.core.hydra_config import HydraConfig
+from omegaconf import DictConfig, OmegaConf
 
 
 def some_method() -> int:
@@ -42,6 +42,16 @@ class Bar:
         if x is not NotImplemented:
             return not x
         return NotImplemented
+
+
+class Foo:
+    def __init__(self, x: int) -> None:
+        self.x = x
+
+    def __eq__(self, other: Any) -> Any:
+        if isinstance(other, Foo):
+            return self.x == other.x
+        return False
 
 
 @pytest.mark.parametrize("path,expected_type", [("tests.test_utils.Bar", Bar)])  # type: ignore
@@ -98,6 +108,15 @@ def test_get_static_method(path: str, return_value: Any) -> None:
             None,
             {"a": 10, "d": 40},
             Bar(10, 200, 200, 40),
+        ),
+        (
+            {
+                "class": "tests.test_utils.Bar",
+                "params": {"b": 200, "c": "${params.b}"},
+            },
+            None,
+            {"a": 10, "d": Foo(99)},
+            Bar(10, 200, 200, Foo(99)),
         ),
     ],
 )

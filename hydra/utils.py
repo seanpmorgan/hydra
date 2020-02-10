@@ -3,7 +3,7 @@ import logging.config
 from pathlib import Path
 from typing import Any
 
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, OmegaConf, _utils
 
 from hydra.core.hydra_config import HydraConfig
 
@@ -62,9 +62,19 @@ def instantiate(config: DictConfig, *args: Any, **kwargs: Any) -> Any:
         ), "Input config params are expected to be a mapping, found {}".format(
             type(config.params)
         )
-        params.merge_with(OmegaConf.create(kwargs))
+        primitives = {}
+        rest = {}
+        for k, v in kwargs.items():
+            if _utils._is_primitive_type(v) or isinstance(v, (dict, list)):
+                primitives[k] = v
+            else:
+                rest[k] = v
+        params.merge_with(OmegaConf.create(primitives))
+        final_kwargs = params.to_container(resolve=True)
+        for k, v in rest.items():
+            final_kwargs[k] = v
 
-        return clazz(*args, **params)
+        return clazz(*args, **final_kwargs)
     except Exception as e:
         log.error("Error instantiating {} : {}".format(config["class"], e))
         raise e
