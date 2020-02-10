@@ -70,7 +70,7 @@ def instantiate(config: DictConfig, *args: Any, **kwargs: Any) -> Any:
             else:
                 rest[k] = v
         params.merge_with(OmegaConf.create(primitives))
-        final_kwargs = params.to_container(resolve=True)
+        final_kwargs = OmegaConf.to_container(params, resolve=True)
         for k, v in rest.items():
             final_kwargs[k] = v
 
