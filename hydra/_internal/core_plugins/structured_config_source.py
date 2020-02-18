@@ -3,7 +3,7 @@ import importlib
 import warnings
 from typing import List, Optional
 
-from hydra.core.config_store import ConfigStore
+from hydra.core.config_store import ConfigStore, ConfigNode
 from hydra.core.object_type import ObjectType
 from hydra.plugins.config_source import ConfigResult, ConfigSource
 
@@ -30,10 +30,10 @@ class StructuredConfigSource(ConfigSource):
 
     def load_config(self, config_path: str) -> ConfigResult:
         full_path = self._normalize_file_name(config_path)
+        ret = self.store.load(config_path=full_path)
+        provider = ret.provider if ret.provider is not None else self.provider
         return ConfigResult(
-            config=self.store.load(config_path=full_path),
-            path=f"{self.scheme()}://{self.path}",
-            provider=self.provider,
+            config=ret.node, path=f"{self.scheme()}://{self.path}", provider=provider
         )
 
     def is_group(self, config_path: str) -> bool:
